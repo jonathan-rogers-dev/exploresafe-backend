@@ -23,12 +23,8 @@ const ref = db.ref("/");
 exports.helloWorld = functions.https.onRequest((request, response) => {
   functions.logger.info("Hello logs!", {structuredData: true});
   ref.once("value", (data) => {
-    for (const activeRoute in data) {
-      if (activeRoute != null) {
-        console.log(activeRoute.active_route_id_0);
-      }
-    }
-    response.send(data);
+    console.log(data.active_route_id_0.user_id);
+    response.send(data.active_route_id_0.user_id);
   });
 });
 
