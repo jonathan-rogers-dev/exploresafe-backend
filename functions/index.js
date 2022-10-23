@@ -40,7 +40,7 @@ exports.helloWorld = functions.https.onRequest((request, response) => {
 
           twilioClient.messages
               .create({
-                body: "Fuck yeah!",
+                body: routeData,
                 to: "+19803584144", // Text this number
                 from: "+17174238730", // From a valid Twilio number
               })
