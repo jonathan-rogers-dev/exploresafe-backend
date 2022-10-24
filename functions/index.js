@@ -14,7 +14,7 @@ admin.initializeApp({
 const db = admin.database();
 const ref = db.ref("/routes/");
 
-exports.helloWorld = functions.https.onRequest((request, response) => {
+exports.passiveSOS = functions.https.onRequest((request, response) => {
   // Create Twilio Client
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
