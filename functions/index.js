@@ -32,6 +32,8 @@ exports.helloWorld = functions.https.onRequest((request, response) => {
         const placeholder = true;
         if (placeholder) {
           // This acts like there is a need for an SOS notification.
+          const TWILIO_FROM_PHONE_NUMBER = process.env.TWILIO_FROM_PHONE_NUMBER;
+          const TWILIO_TO_PHONE_NUMBER = process.env.TWILIO_TO_PHONE_NUMBER;
           console.log("SOS");
 
 
@@ -40,15 +42,12 @@ exports.helloWorld = functions.https.onRequest((request, response) => {
 
           twilioClient.messages
               .create({
-                body: routeData,
-                to: "+19803584144", // Text this number
-                from: "+17174238730", // From a valid Twilio number
+                body: "Hello There",
+                to: TWILIO_TO_PHONE_NUMBER, // Text this number
+                from: TWILIO_FROM_PHONE_NUMBER, // From a valid Twilio number
               })
               .then((message) => console.log(message.sid));
         }
-
-        // eslint-disable-next-line max-len
-        console.log("Passive SOS: " + passiveSOSTime + " | Last Callback Time: " + lastCallbackTime);
       }
     }
     response.send("Hi");
