@@ -26,7 +26,9 @@ exports.passiveSOS = functions.https.onRequest((request, response) => {
       if (route != null) {
         const routeData = data.val()[route];
         // const routeID = routeData.route_id;
+        // eslint-disable-next-line no-unused-vars
         const passiveSOSTime = routeData.passive_sos_time;
+        // eslint-disable-next-line no-unused-vars
         const lastCallbackTime = routeData.last_callback_time;
 
         const placeholder = true;
