@@ -31,20 +31,22 @@ exports.passiveSOS = functions.https.onRequest((request, response) => {
         // eslint-disable-next-line no-unused-vars
         const lastCallbackTime = routeData.last_callback_time;
 
-        const placeholder = true;
+        const placeholder = false;
         if (placeholder) {
           // This acts like there is a need for an SOS notification.
           const TWILIO_FROM_PHONE_NUMBER = process.env.TWILIO_FROM_PHONE_NUMBER;
           const TWILIO_TO_PHONE_NUMBER = process.env.TWILIO_TO_PHONE_NUMBER;
           console.log("SOS");
 
+          // eslint-disable-next-line max-len
+          const message = "This is a message from ExploreSafe. At <TIME> today, an automated SOS call was made from Jonathan's ExploreSafe app to alert listed contacts that Jonathan's device has been offline for <TIME>. Please do not be frightned, however, an unexpectedly long amount of time offline may indicate that Jonathan is trapped, lost, or otherwise missing. Please use the link below to access their location history.\nhttps://exploresafe-362903.firebaseapp.com/active_route_id_0";
 
           // Create Website with access to server
           // Send link to SMS
 
           twilioClient.messages
               .create({
-                body: "Hello There",
+                body: message,
                 to: TWILIO_TO_PHONE_NUMBER, // Text this number
                 from: TWILIO_FROM_PHONE_NUMBER, // From a valid Twilio number
               })
