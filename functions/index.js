@@ -25,6 +25,7 @@ exports.passiveSOS = functions.https.onRequest((request, response) => {
     for (const route in data.val()) {
       if (route != null) {
         let performSOS = false;
+        let updateAfterSOS = false;
         const routeData = data.val()[route];
         // const routeID = routeData.route_id;
         // eslint-disable-next-line no-unused-vars
@@ -71,15 +72,15 @@ exports.passiveSOS = functions.https.onRequest((request, response) => {
             break;
         }
 
+        if ((currentDate - lastCallbackTimeDate) / minute < 6) {
+          updateAfterSOS = true;
+        }
 
-        if (performSOS && !sosMessageSent) {
-          // This acts like there is a need for an SOS notification.
+        if (sosMessageSent && updateAfterSOS) {
+          // eslint-disable-next-line max-len
           const TWILIO_FROM_PHONE_NUMBER = process.env.TWILIO_FROM_PHONE_NUMBER;
           const TWILIO_TO_PHONE_NUMBER = process.env.TWILIO_TO_PHONE_NUMBER;
-          console.log("SOS");
-
-          // eslint-disable-next-line max-len
-          const message = "This is a message from ExploreSafe. At " + currentDate + "today, an automated SOS call was made from Jonathan's ExploreSafe app to alert listed contacts that Jonathan's device has been offline for <TIME>. Please do not be frightned, however, an unexpectedly long amount of time offline may indicate that Jonathan is trapped, lost, or otherwise missing. Please use the link below to access their location history.\nhttps://exploresafe-362903.firebaseapp.com/" + route;
+          const message = "An update has been made to " + routeData.user_name + "'s route history. Please use the link below to access their updated location history.\nhttps://exploresafe-362903.firebaseapp.com/" + route;
           console.log(message);
           // Create Website with access to server
           // Send link to SMS
@@ -87,11 +88,33 @@ exports.passiveSOS = functions.https.onRequest((request, response) => {
           twilioClient.messages
               .create({
                 body: message,
-                to: TWILIO_TO_PHONE_NUMBER, // Text this number
-                from: TWILIO_FROM_PHONE_NUMBER, // From a valid Twilio number
+                to: TWILIO_TO_PHONE_NUMBER,
+                from: TWILIO_FROM_PHONE_NUMBER,
               })
               .then((message) => console.log(message.sid));
+        }
 
+
+        if (performSOS && !sosMessageSent) {
+          // This acts like there is a need for an SOS notification.
+          // eslint-disable-next-line max-len
+          const TWILIO_FROM_PHONE_NUMBER = process.env.TWILIO_FROM_PHONE_NUMBER;
+          const TWILIO_TO_PHONE_NUMBER = process.env.TWILIO_TO_PHONE_NUMBER;
+          console.log("SOS");
+
+          // eslint-disable-next-line max-len
+          const message = "This is a message from ExploreSafe. At " + currentDate + "today, an automated SOS call was made from " + routeData.user_name + "'s ExploreSafe app to alert listed contacts that " + routeData.user_name + "'s device has been offline for "+ passiveSOSTime.value + " " + passiveSOSTime.unit.lower() + ". Please do not be frightned, however, an unexpectedly long amount of time offline may indicate that " + routeData.user_name + " is trapped, lost, or otherwise missing. Please use the link below to access their location history.\nhttps://exploresafe-362903.firebaseapp.com/" + route;
+          console.log(message);
+          // Create Website with access to server
+          // Send link to SMS
+
+          twilioClient.messages
+              .create({
+                body: message,
+                to: TWILIO_TO_PHONE_NUMBER,
+                from: TWILIO_FROM_PHONE_NUMBER,
+              })
+              .then((message) => console.log(message.sid));
 
           const updateRef = db.ref("/routes/" + route + "/");
 
@@ -101,8 +124,8 @@ exports.passiveSOS = functions.https.onRequest((request, response) => {
         }
       }
     }
-    response.send("Hi");
   });
+  response.send("Hi");
 });
 
 
@@ -117,6 +140,7 @@ exports.passiveSOSCheck = functions.pubsub.schedule("every 5 minutes")
         for (const route in data.val()) {
           if (route != null) {
             let performSOS = false;
+            let updateAfterSOS = false;
             const routeData = data.val()[route];
             // const routeID = routeData.route_id;
             // eslint-disable-next-line no-unused-vars
@@ -163,6 +187,28 @@ exports.passiveSOSCheck = functions.pubsub.schedule("every 5 minutes")
                 break;
             }
 
+            if ((currentDate - lastCallbackTimeDate) / minute < 6) {
+              updateAfterSOS = true;
+            }
+
+            if (sosMessageSent && updateAfterSOS) {
+              // eslint-disable-next-line max-len
+              const TWILIO_FROM_PHONE_NUMBER = process.env.TWILIO_FROM_PHONE_NUMBER;
+              const TWILIO_TO_PHONE_NUMBER = process.env.TWILIO_TO_PHONE_NUMBER;
+              const message = "An update has been made to " + routeData.user_name + "'s route history. Please use the link below to access their updated location history.\nhttps://exploresafe-362903.firebaseapp.com/" + route;
+              console.log(message);
+              // Create Website with access to server
+              // Send link to SMS
+
+              twilioClient.messages
+                  .create({
+                    body: message,
+                    to: TWILIO_TO_PHONE_NUMBER,
+                    from: TWILIO_FROM_PHONE_NUMBER,
+                  })
+                  .then((message) => console.log(message.sid));
+            }
+
 
             if (performSOS && !sosMessageSent) {
               // This acts like there is a need for an SOS notification.
@@ -172,7 +218,7 @@ exports.passiveSOSCheck = functions.pubsub.schedule("every 5 minutes")
               console.log("SOS");
 
               // eslint-disable-next-line max-len
-              const message = "This is a message from ExploreSafe. At " + currentDate + "today, an automated SOS call was made from Jonathan's ExploreSafe app to alert listed contacts that Jonathan's device has been offline for <TIME>. Please do not be frightned, however, an unexpectedly long amount of time offline may indicate that Jonathan is trapped, lost, or otherwise missing. Please use the link below to access their location history.\nhttps://exploresafe-362903.firebaseapp.com/" + route;
+              const message = "This is a message from ExploreSafe. At " + currentDate + "today, an automated SOS call was made from " + routeData.user_name + "'s ExploreSafe app to alert listed contacts that " + routeData.user_name + "'s device has been offline for "+ passiveSOSTime.value + " " + passiveSOSTime.unit.lower() + ". Please do not be frightned, however, an unexpectedly long amount of time offline may indicate that " + routeData.user_name + " is trapped, lost, or otherwise missing. Please use the link below to access their location history.\nhttps://exploresafe-362903.firebaseapp.com/" + route;
               console.log(message);
               // Create Website with access to server
               // Send link to SMS
