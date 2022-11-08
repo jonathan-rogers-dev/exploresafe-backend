@@ -18,7 +18,7 @@
 
     .menu a {
       background-color: #e5e5e5;
-      padding: 8px;
+      padding: 3px;
       margin-top: 7px;
       display: block;
       width: 100%;
@@ -32,7 +32,7 @@
     }
 
     .right {
-      background-color: #e5e5e5;
+      background-color: #ef8354;
       float: left;
       width: 20%;
       padding: 15px;
@@ -56,16 +56,16 @@
       }
     }
   </style>
-  <title>Add Map</title>
+  <title id="websiteName">Route Map</title>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
 
 </head>
 
 
 
-<body style="font-family:Verdana;color:#aaaaaa;">
-  <div style="background-color:#e5e5e5;padding:15px;text-align:center;">
-    <h1>Warning</h1>
+<body style="font-family:Sans-serif;color:#202020;">
+  <div style="background-color:#4f5d75;padding:10px;text-align:center;">
+    <h1 id="pageName" style="color:FFFFFF;"></h1>
   </div>
   <!--The div element for the map -->
   <div style="overflow:auto">
@@ -87,7 +87,9 @@
 
     <div class="right">
       <h2>Information</h2>
-      <p>Last Known Location: </p>
+      <p id="lastKnownLocation">Last Known Location: UNKNOWN</p>
+      <p id="lastTimeUpdate">Last Time Online: UNKNOWN</p>
+      <p id="nearestAddress">Nearest Address to Last Known Location: UNKNOWN</p> 
     </div>
   </div>
 
@@ -118,49 +120,124 @@
 
       try {
         waypoints = data.waypoints
+        expecetedMarkers = data.expected_route
 
-        let markerArray = [];
+
+
+        let realMarkerArray = [];
+        let expectedMarkerArray = [];
 
 
         for (let x in waypoints) {
           console.log(waypoints[x])
-          markerArray.push({ lat: waypoints[x].lat, lng: waypoints[x].long })
+          realMarkerArray.push({ lat: waypoints[x].lat, lng: waypoints[x].long })
         }
-        // The location of Uluru
-        // The map, centered at Uluru
+
+        for (let x in expecetedMarkers) {
+          console.log(expecetedMarkers[x])
+          expectedMarkerArray.push({ lat: expecetedMarkers[x].lat, lng: expecetedMarkers[x].long })
+        }
+
+
+        const geocoder = new google.maps.Geocoder();
+        const infowindow = new google.maps.InfoWindow();
+
+
+
+        document.getElementById("pageName").innerHTML = data.user_name.replaceAll("\"", "") + "'s Route History";
+        document.getElementById("websiteName").innerHTML = data.user_name.replaceAll("\"", "") + "'s Route History";
+        document.getElementById("lastKnownLocation").innerHTML = "<b>Last Known Location:</b> " + waypoints[waypoints.length - 1].lat + ", " + waypoints[waypoints.length - 1].long;
+        document.getElementById("lastTimeUpdate").innerHTML = "<b>Last Time Online:</b> " + data.last_callback_time.hour + ":" + data.last_callback_time.minute + " (24-hour) on " + data.last_callback_time.month + "/" + data.last_callback_time.day + "/" + data.last_callback_time.year;
 
         const map = new google.maps.Map(document.getElementById("map"), {
           mapId: "",
           zoom: 10,
-          center: markerArray[0],
+          center: realMarkerArray[0],
         });
-        // The marker, positioned at Uluru
 
-        for (let m of markerArray) {
+        geocodeLatLng(geocoder, map, infowindow, waypoints[waypoints.length - 1].lat, waypoints[waypoints.length - 1].long);
+
+        var realLineSymbol = {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: 'OrangeRed',
+          strokeColor: 'OrangeRed',
+          fillOpacity: 1,
+          scale: 4
+        };
+
+
+        var ExpectedLineSymbol = {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: 'Black',
+          strokeColor: 'Black',
+          fillOpacity: 1,
+          scale: 4
+        };
+
+
+
+        // User's real markers
+        for (let m of realMarkerArray) {
           const marker = new google.maps.Marker({
+            icon: realLineSymbol,
             position: m,
             map: map,
 
           });
         }
 
+        // User's real markers
+        for (let m of expectedMarkerArray) {
+          const marker = new google.maps.Marker({
+            icon: ExpectedLineSymbol,
+            position: m,
+            map: map,
+          });
+        }
+
         // Define a symbol using SVG path notation, with an opacity of 1.
-        var lineSymbol = {
-          path: 'M 0,-1 0,1',
+        var realMarkerlineSymbol = {
+          strokeColor: 'Tomato',
+          fillColor: 'Tomato',
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
           strokeOpacity: 1,
-          scale: 4
+          fillOpacity: 1,
+          scale: 2
         };
+
+        var expectedMarkerlineSymbol = {
+          strokeColor: 'Grey',
+          fillColor: 'Grey',
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          strokeOpacity: 1,
+          fillOpacity: 1,
+          scale: 2
+        };
+
 
         // Create the polyline, passing the symbol in the 'icons' property.
         // Give the line an opacity of 0.
         // Repeat the symbol at intervals of 20 pixels to create the dashed effect.
-        var line = new google.maps.Polyline({
-          path: markerArray,
+        var realMarkerArrayLine = new google.maps.Polyline({
+          path: realMarkerArray,
           strokeOpacity: 0,
           icons: [{
-            icon: lineSymbol,
+            icon: realMarkerlineSymbol,
             offset: '0',
-            repeat: '20px'
+            repeat: '20px',
+          }],
+          map: map
+        });
+
+
+
+        var expectedMarkerArrayLine = new google.maps.Polyline({
+          path: expectedMarkerArray,
+          strokeOpacity: 0,
+          icons: [{
+            icon: expectedMarkerlineSymbol,
+            offset: '0',
+            repeat: '20px',
           }],
           map: map
         });
@@ -171,6 +248,23 @@
 
     }
 
+    function geocodeLatLng(geocoder, map, infowindow, lata, long) {
+      const latlng = {
+        lat: lata,
+        lng: long,
+      };
+
+      geocoder
+        .geocode({ location: latlng })
+        .then((response) => {
+          if (response.results[0]) {
+            document.getElementById("nearestAddress").innerHTML = "<b>Nearest Address to Last Known Location:</b> " + response.results[0].formatted_address;
+          } else {
+            document.getElementById("nearestAddress").innerHTML = "<b>Nearest Address to Last Known Location:</b> " + "ERROR";
+          }
+        })
+        .catch((e) => window.alert("Geocoder failed due to: " + e));
+    }
 
   </script>
 
